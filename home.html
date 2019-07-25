@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="google-signin-client_id" content="45154372968-0u3rkhb3g2hptlaq9o1sfmkh13v7s97q.apps.googleusercontent.com">
+    <script src="/js/platform.js" async defer></script>
+
+    <link rel="stylesheet" href="/css/nv.d3.min.css" />
+    <script src="/js/angular.min.js"></script>
+    <script src="/js/d3.min.js" charset="utf-8"></script>
+    <script src="/js/nv.d3.min.js"></script>
+    <script src="/js/angular-nvd3.min.js"></script>
+
+    <!--    custom-->
+
+    <link rel="stylesheet" type="text/css" href="/css/home.css">
+    <script src="/js/app.js"></script>
+    <script src="/js/controller/homeController.js"></script>
+
+</head>
+
+<body style="font-family:Verdana;color:#aaaaaa;" ng-app="pmdbApp" ng-controller="homeController" >
+
+
+
+    <!--    <div class="g-signin2" data-onsuccess="onSignIn();" data-theme="dark" style="float: right" ></div>-->
+
+    <div>
+        <h3 ng-if="!userProfile.name">
+            Welcome Guest
+        </h3>
+        <h3 ng-if="userProfile.name">
+            Welcome {{userProfile.name}}
+        </h3>
+    </div>
+  <!--  Google Auth-->
+    <div class="g-signin2" data-onsuccess="onSignIn" style="float:right" ng-show="!userProfile.id"></div>
+
+    <button ng-click="signOut();" style="float:right" ng-show="userProfile.id">Sign out</button>
+
+    <br>
+    <div style="background-color:#e5e5e5;text-align:center;">
+
+        <h1>PMDB</h1>
+
+    </div>
+
+    <!--   filters-->
+
+    <div style="overflow:auto;">
+        <div class="right">
+
+            <div class="menu">
+                <h3>Library</h3>
+                <ol ng-show="userProfile.id">
+                    <li ng-repeat="myFav in userProfile.fav">
+                        {{myFav.split('_')[1]}}
+                        <button class="btn btn-square btn-lg btn-ghost-green" ng-click="openModal(myFav,true)">See Details</button>
+                        <button class="btn btn-square btn-md btn-ghost-red" ng-click="removeBook(myFav)">Remove bookmark</button>
+
+                </ol>
+                <h4 ng-show="!userProfile.id">Please login to see library</h4>
+            </div>
+
+        </div>
+
+        <!--       posters-->
+
+        <div class="main">
+
+            <br>
+            <div style=" text-align: -webkit-center;">
+                <input type="text" placeholder="Movies... TV..." ng-model="queryVid">
+                <a data-title="Search" class="link" ng-click="searchVid()"></a>
+                <br>
+                <br>
+                <div style="background-color: black;width: fit-content;">
+                    <button ng-click="queryVid='';movieInit(0,'M');myVid='M'" class="btn btn-square btn-lg btn-ghost-green">Movies</button>
+                    <button ng-click="queryVid='';movieInit(0,'T');myVid='T'" class="btn btn-square btn-lg btn-ghost-green">T.V.Series</button>
+                </div>
+            </div>
+            <div style=" text-align: -webkit-center;">
+                <br>
+
+                <table border="1" ng-repeat="videoRows in videoTable">
+
+                    <th ng-repeat="video in videoRows" ng-if="video.poster_path!==null">
+
+                        <img ng-src="http://image.tmdb.org/t/p/w185/{{video.poster_path}}" style="opacity: 0.75" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75" ng-click="openModal(video,false)">
+
+                        <div style="background-color: dimgrey;">
+                            <div ng-click="moveToBook(video.id,video.original_name,video.title)">
+                                <img src="/images/bookmark.svg" alt="bookmark" style="height: 50px;width: 100px;">
+                                <div>Bookmark</div>
+                            </div>
+                            <!-- <div>
+                                <img src="/images/unbookmark.svg" alt="unbookmark" style="height: 50px;width: 100px;">
+                                <div>Remove Bookmark</div>
+                            </div> -->
+                        </div>
+
+                    </th>
+                    <th ng-repeat="video in videoRows" ng-if="video.poster_path===null">
+
+                        <img ng-src="/images/noimages.jpg" style="opacity: 0.75" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75" ng-click="openModal(video,false)">
+                        <div style="background-color: dimgrey;">
+                            <div ng-click="moveToBook(video.id,video.original_name,video.title)">
+                                <img src="/images/bookmark.svg" alt="bookmark" style="height: 50px;width: 100px;">
+                                <div>Bookmark</div>
+                            </div>
+                            <!-- <div>
+                                <img src="/images/unbookmark.svg" alt="unbookmark" style="height: 50px;width: 100px;">
+                                <div>Remove Bookmark</div>
+                            </div> -->
+                        </div>
+                    </th>
+
+                </table>
+                <button ng-click="movieInit(-1)">Prev Page</button>
+                {{showPageNum}}
+                <button ng-click="movieInit(1)">Next Page</button>
+
+            </div>
+        </div>
+
+        <!--       library-->
+        <!--
+<div class="right">
+    <h2>Library</h2>
+    <p>PMDB</p>
+</div>
+-->
+    </div>
+
+    <!--analytics-->
+
+    <div style="text-align:center;padding:10px;margin-top:7px;background-color: grey" ng-init="showanalytics()">
+        <div style="background-color:#e5e5e5;text-align:center;padding:10px;margin-top:7px;">View Insights</div>
+        <br>
+        <div style=" text-align: -webkit-center;" ng-if="!analyticsFav.info">
+            <h3>Movies</h3>
+            <table border="1">
+                <th>
+                    Genres
+                    <nvd3 options="options" data="dataM"></nvd3>
+                </th>
+                <th>
+                    Popularity
+                    <nvd3 options="optionsBar" data="dataBarM"></nvd3>
+                </th>
+                <th>
+                    Votes
+                    <nvd3 options="optionsBar" data="dataBar2M"></nvd3>
+
+                </th>
+            </table>
+
+            <h3>TV Series</h3>
+
+            <table border="1">
+                <th>Genres
+                    <nvd3 options="options" data="dataT"></nvd3>
+                </th>
+                <th> Popularity
+                    <nvd3 options="optionsBar" data="dataBarT"></nvd3>
+                </th>
+                <th>Votes
+                    <nvd3 options="optionsBar" data="dataBar2T"></nvd3>
+                </th>
+            </table>
+        </div>
+        <div ng-if="analyticsFav.info">
+
+            {{analyticsFav.info}}
+
+        </div>
+    </div>
+
+    <div style="background-color:#e5e5e5;text-align:center;padding:10px;margin-top:7px;">PMDB</div>
+
+    <!--description modal-->
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">   <!---popup movies---!>
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="close">&times;</span>
+                <h2 ng-if="modalMovie.title">{{modalMovie.title}}</h2>
+                <h2 ng-if="modalMovie.original_name">{{modalMovie.original_name}}</h2>
+
+            </div>
+            <img ng-src="http://image.tmdb.org/t/p/w185/{{modalMovie.poster_path}}" style="float: left;">
+            <div class="modal-body" ng-if="modalMovie.overview!==''">
+                {{modalMovie.overview}}
+            </div>
+            <div class="modal-body" ng-if="modalMovie.overview==''">
+                No Summary Available.
+            </div>
+            <br>
+
+            <div class="modal-body">
+                <h4>Recommendations</h4>
+                <table border="1">       <!--      recommendations-->
+
+                    <th ng-repeat="video in recomTable" ng-if="video.poster_path!==null">
+
+                        <img ng-src="http://image.tmdb.org/t/p/w185/{{video.poster_path}}" style="opacity: 0.75" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75" ng-click="openModal(video,false)">
+
+                        <div style="background-color: dimgrey;">
+                            <div ng-click="moveToBook(video.id,video.original_name,video.title)">
+                                <img src="/images/bookmark.svg" alt="bookmark" style="height: 50px;width: 100px;">
+                                <div>Bookmark</div>
+                            </div>
+
+                        </div>
+
+                    </th>
+                    <th ng-repeat="video in recomTable" ng-if="video.poster_path===null">
+
+                        <img ng-src="/images/noimages.jpg" style="opacity: 0.75" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75" ng-click="openModal(video,false)">
+                        <div style="background-color: dimgrey;">
+                            <div ng-click="moveToBook(video.id,video.original_name,video.title)">
+                                <img src="/images/bookmark.svg" alt="bookmark" style="height: 50px;width: 100px;">
+                                <div>Bookmark</div>
+                            </div>
+
+                        </div>
+                    </th>
+
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <h3 ng-if="modalMovie.title"><a href="https://www.themoviedb.org/search?query={{modalMovie.title}}&language=en-US">Read on TMDB</a></h3>
+                <h3 ng-if="modalMovie.original_name"><a href="https://www.themoviedb.org/search?query={{modalMovie.original_name}}&language=en-US">Read on TMDB</a></h3>
+            </div>
+        </div>
+
+    </div>
+
+
+</body>
+
+
+</html>
